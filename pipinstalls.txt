@@ -1,0 +1,8 @@
+Python 3.9.2
+pip install discord.py
+pip install pynacl
+pip install pydub
+pip install pyaudio
+pip install wave
+pip install discord-ext-audiorec
+python -m pip install -U discord-ext-audiorec
