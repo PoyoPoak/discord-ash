@@ -7,3 +7,4 @@ pip install wave
 pip install discord-ext-audiorec
 python -m pip install -U discord-ext-audiorec
 pip install SpeechRecognition
+pip install gTTS

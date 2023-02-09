@@ -1,10 +1,11 @@
 import discord
 import os
+import tempfile
+from gtts import gTTS
 import speech_recognition as sr
 from discord.ext import commands
 from discord.voice_client import VoiceClient
 from discord.ext.audiorec import NativeVoiceClient 
-import random
 
 bot = commands.Bot(command_prefix = ">",
                       intents=discord.Intents.all())
@@ -91,7 +92,10 @@ async def stop(ctx: commands.Context):
                              color=0x546e7a)
     await ctx.send(embed=embedVar)
     
-    transcription = transcribe_audio("prompt.wav")
+    transcription = await transcribe_audio("prompt.wav")
+    
+    await text_to_speech(transcription)
+    
     await ctx.send("Transcribed audio: " + transcription)
 
 
@@ -120,7 +124,7 @@ async def ensure_voice(ctx):
 
 
 # Audio transcription.
-def transcribe_audio(audio_file):
+async def transcribe_audio(audio_file):
     r = sr.Recognizer()
 
     with sr.AudioFile(audio_file) as source:
@@ -132,6 +136,13 @@ def transcribe_audio(audio_file):
         return "Error: Speech recognition could not understand the audio"
     except sr.RequestError as e:
         return f"Error: Could not request results from speech recognition service: {e}"
+    
+    
+    
+# Text to speech, saves to file.
+async def text_to_speech(response):
+    tts = gTTS(text=response, lang='en')
+    tts.save("response.wav")
         
         
         
