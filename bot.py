@@ -1,10 +1,9 @@
 import discord
-import os
-import tempfile
-from gtts import gTTS
+import openai
+import asyncio
 import speech_recognition as sr
+from gtts import gTTS
 from discord.ext import commands
-from discord.voice_client import VoiceClient
 from discord.ext.audiorec import NativeVoiceClient 
 
 bot = commands.Bot(command_prefix = ">",
@@ -16,7 +15,8 @@ bot = commands.Bot(command_prefix = ">",
 
 
 
-# param
+openai.api_key = "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"
+model_engine = "text-davinci-003"
 
 
 
@@ -91,12 +91,82 @@ async def stop(ctx: commands.Context):
     embedVar = discord.Embed(title="Stopped the recording!",
                              color=0x546e7a)
     await ctx.send(embed=embedVar)
+
+    await process_prompt()
+    await play(ctx)
+    # await ctx.guild.voice_client.disconnect()
+
+
+
+# Plays a specific audio file in VC.       
+@bot.command() 
+async def play(ctx):
+    await ctx.guild.voice_client.disconnect()
+    await asyncio.sleep(1)
+    channel = ctx.author.voice.channel
+    if channel is not None:
+            vc = await channel.connect()
+            vc.play(discord.FFmpegPCMAudio('response.wav'))
+            while vc.is_playing():
+                await asyncio.sleep(1)
+            vc.stop()
+            # await vc.disconnect()
+    else:
+        await ctx.channel.send("You are not in a voice channel.")
     
+    # vc = ctx.guild.voice_client
+    # await vc.disconnect()
+    # await ctx.author.voice.channel.connect()
+    # vc.play(discord.FFmpegPCMAudio('response.wav'))
+    # while vc.is_playing():
+    #     await asyncio.sleep(1)
+    # vc.stop()
+
+
+
+# Audio transcription.
+async def transcribe_audio(audio_file):
+    r = sr.Recognizer()
+
+    with sr.AudioFile(audio_file) as source:
+        audio = r.record(source)
+    
+    try:
+        return r.recognize_google(audio, language='en-US')
+    except sr.UnknownValueError:
+        return "Error: Speech recognition could not understand the audio"
+    except sr.RequestError as e:
+        return f"Error: Could not request results from speech recognition service: {e}"
+    
+
+
+
+# Sends prompt to openai for text response.
+async def prompt_openai(prompt):
+    completion = openai.Completion.create(engine=model_engine,
+                                          prompt=prompt,    
+                                          max_tokens=1024,    
+                                          n=1,
+                                          stop=None,
+                                          temperature=0.5,)
+
+    response = completion.choices[0].text
+    return response
+
+
+    
+# Text to speech, saves to file.
+async def text_to_speech(text):
+    tts = gTTS(text=text, lang='en')
+    tts.save("response.wav")
+        
+        
+
+# Transcribes to text, text to OpenAI, reponse to speech.
+async def process_prompt():
     transcription = await transcribe_audio("prompt.wav")
-    
-    await text_to_speech(transcription)
-    
-    await ctx.send("Transcribed audio: " + transcription)
+    response = await prompt_openai(transcription)
+    await text_to_speech(response)
 
 
 
@@ -118,33 +188,6 @@ async def ensure_voice(ctx):
         ctx.voice_client.stop()
 
   
-  
-# HELPERS ---------------------------------------------------------------------    
-
-
-
-# Audio transcription.
-async def transcribe_audio(audio_file):
-    r = sr.Recognizer()
-
-    with sr.AudioFile(audio_file) as source:
-        audio = r.record(source)
-    
-    try:
-        return r.recognize_google(audio, language='en-US')
-    except sr.UnknownValueError:
-        return "Error: Speech recognition could not understand the audio"
-    except sr.RequestError as e:
-        return f"Error: Could not request results from speech recognition service: {e}"
-    
-    
-    
-# Text to speech, saves to file.
-async def text_to_speech(response):
-    tts = gTTS(text=response, lang='en')
-    tts.save("response.wav")
-        
-        
         
 # START BOT -------------------------------------------------------------------    
 
