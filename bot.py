@@ -26,6 +26,8 @@ model_engine = "text-davinci-003"
 
 @bot.event
 async def on_ready():
+    """Bot ready event and sets status.
+    """
     await bot.change_presence(status=discord.Status.dnd, 
                                  activity=discord.Game("VSCode"))
     print("We have logged in as {0.user}".format(bot))
@@ -37,33 +39,50 @@ async def on_ready():
 
 
 
-# Prints a hello world to text channel.
 @bot.command()
 async def test(ctx):
+    """Test command.
+
+    Args:
+        ctx (commands.Context): Standard discord.py context.
+    """
     await ctx.send("Hello world!")
     
     
     
-# Print bot's latency to text channel.
 @bot.command()
 async def ping(ctx):
+    """Pings the bot and returns latency.
+
+    Args:
+        ctx (commands.Context): Standard discord.py context.
+    """
     await ctx.send(f"Pong: {round(bot.latency * 1000)}ms")
 
 
 
-# Summons bot to VC of command author.
 @bot.command()
 async def join(ctx: commands.Context):
+    """Joins the voice channel of the author.
+
+    Args:
+        ctx (commands.Context): Standard discord.py context.
+    """
     channel: discord.VoiceChannel = ctx.author.voice.channel
+    
     if ctx.voice_client is not None:
         return await ctx.voice_client.move_to(channel)
     await channel.connect(cls=NativeVoiceClient)
 
 
 
-# Begins recording audio in voice channel.
 @bot.command()
-async def rec(ctx):
+async def rec(ctx):    
+    """Start recording audio.
+
+    Args:
+        ctx (commands.Context): Standard discord.py context.
+    """
     # Start recording.
     ctx.voice_client.record(lambda e: print(f"Exception: {e}"))
     
@@ -75,9 +94,13 @@ async def rec(ctx):
 
 
 
-# Stops audio recording in voice channel. 
 @bot.command()
 async def stop(ctx: commands.Context):
+    """Stop recording and process audio.
+
+    Args:
+        ctx (commands.Context): Standard discord.py context.
+    """
     if not ctx.voice_client.is_recording():
         return
 
@@ -92,45 +115,54 @@ async def stop(ctx: commands.Context):
                              color=0x546e7a)
     await ctx.send(embed=embedVar)
 
+    # Process audio and play.
     await process_prompt()
     await play(ctx)
-    # await ctx.guild.voice_client.disconnect()
 
 
 
-# Plays a specific audio file in VC.       
 @bot.command() 
 async def play(ctx):
+    """Plays response.wav audio file in voice channel.
+
+    Args:
+        ctx (commands.Context): Standard discord.py context.
+    """
+    
+    # Not sure why, but bot needs to disconnect and reconnect to play audio.
     await ctx.guild.voice_client.disconnect()
     await asyncio.sleep(1)
+    
     channel = ctx.author.voice.channel
+    
+    # Connect to voice channel and play audio.
     if channel is not None:
             vc = await channel.connect()
             vc.play(discord.FFmpegPCMAudio('response.wav'))
             while vc.is_playing():
                 await asyncio.sleep(1)
             vc.stop()
-            # await vc.disconnect()
     else:
         await ctx.channel.send("You are not in a voice channel.")
-    
-    # vc = ctx.guild.voice_client
-    # await vc.disconnect()
-    # await ctx.author.voice.channel.connect()
-    # vc.play(discord.FFmpegPCMAudio('response.wav'))
-    # while vc.is_playing():
-    #     await asyncio.sleep(1)
-    # vc.stop()
 
 
 
-# Audio transcription.
 async def transcribe_audio(audio_file):
+    """Transcribes audio file to text.
+
+    Args:
+        audio_file (file): Audio file to be transcribed.
+
+    Returns:
+        string: Text transcription of audio file.
+    """        
     r = sr.Recognizer()
 
+    # Open the file.
     with sr.AudioFile(audio_file) as source:
         audio = r.record(source)
     
+    # Transcribe audio with google speech recognition.
     try:
         return r.recognize_google(audio, language='en-US')
     except sr.UnknownValueError:
@@ -140,9 +172,15 @@ async def transcribe_audio(audio_file):
     
 
 
-
-# Sends prompt to openai for text response.
 async def prompt_openai(prompt):
+    """Send prompt to OpenAI and return response.
+
+    Args:
+        prompt (string): Text prompt to be sent to OpenAI.
+
+    Returns:
+        string: Text response from OpenAI. 
+    """
     completion = openai.Completion.create(engine=model_engine,
                                           prompt=prompt,    
                                           max_tokens=1024,    
@@ -155,15 +193,21 @@ async def prompt_openai(prompt):
 
 
     
-# Text to speech, saves to file.
 async def text_to_speech(text):
-    tts = gTTS(text=text, lang='en')
+    """Takes text and converts to speech. Saves to wav file.
+
+    Args:
+        text (string): Text to be converted to speech. 
+    """
+    tts = gTTS(text=text, lang='en', slow=False)
     tts.save("response.wav")
         
         
 
-# Transcribes to text, text to OpenAI, reponse to speech.
 async def process_prompt():
+    """Transcribes audio to text, sends to OpenAI, and converts response to 
+        speech.
+    """
     transcription = await transcribe_audio("prompt.wav")
     response = await prompt_openai(transcription)
     await text_to_speech(response)
@@ -174,9 +218,16 @@ async def process_prompt():
 
 
 
-# Ran first when rec command is called.
 @rec.before_invoke
 async def ensure_voice(ctx):
+    """Ensure the author is in a voice channel before invoking the command.
+
+    Args:
+        ctx (commands.Context): Standard discord.py context.
+
+    Raises:
+        commands.CommandError: Errors when user not in voice channel.
+    """
     if ctx.voice_client is None:
         if ctx.author.voice:
             await ctx.author.voice.channel.connect(cls=NativeVoiceClient)
