@@ -42,7 +42,7 @@ async def on_ready():
 
 
 @bot.event
-async def echo(ctx):
+async def on_message(ctx):
     """Bot message event. Sends message to server terminal.
 
     Args:
@@ -50,7 +50,9 @@ async def echo(ctx):
     """
     channel = ctx.channel
     if channel.id == server_terminal_ID and ctx.author != bot.user:
-        await channel.send(ctx.content)
+        response = await prompt_openai(ctx.content)
+        print(response)
+        await channel.send(response)
     await bot.process_commands(ctx)
 
 
