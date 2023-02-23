@@ -16,7 +16,9 @@ bot = commands.Bot(command_prefix = ">",
 
 
 openai.api_key = "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"
+discord_bot_key = "MTA3MDI3ODcyNzU4MzQxMjI0NA.G_ly7p.U04jtq-KNc6mCcF1A3jRvT6QPr6_PsYAASlkjU"
 model_engine = "text-davinci-003"
+server_terminal_ID = 977292010354516039
 
 
 
@@ -36,6 +38,20 @@ async def on_ready():
 
 
 # COMMANDS --------------------------------------------------------------------
+
+
+
+@bot.event
+async def echo(ctx):
+    """Bot message event. Sends message to server terminal.
+
+    Args:
+        ctx (commands.Context): Standard discord.py context.
+    """
+    channel = ctx.channel
+    if channel.id == server_terminal_ID and ctx.author != bot.user:
+        await channel.send(ctx.content)
+    await bot.process_commands(ctx)
 
 
 
@@ -242,4 +258,4 @@ async def ensure_voice(ctx):
         
 # START BOT -------------------------------------------------------------------    
 
-bot.run("MTA3MDI3ODcyNzU4MzQxMjI0NA.G_ly7p.U04jtq-KNc6mCcF1A3jRvT6QPr6_PsYAASlkjU")
+bot.run(discord_bot_key)
