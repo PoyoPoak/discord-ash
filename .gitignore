@@ -1,0 +1,5 @@
+# Ignore .wav files
+*.wav
+
+# Ignore config.json
+config.json

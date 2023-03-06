@@ -1,10 +1,12 @@
 import discord
 import openai
 import asyncio
+import json
+import os
 import speech_recognition as sr
 from gtts import gTTS
 from discord.ext import commands
-from discord.ext.audiorec import NativeVoiceClient 
+from discord.ext.audiorec import NativeVoiceClient
 
 bot = commands.Bot(command_prefix = ">",
                       intents=discord.Intents.all())
@@ -15,10 +17,13 @@ bot = commands.Bot(command_prefix = ">",
 
 
 
-openai.api_key = "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"
-discord_bot_key = "MTA3MDI3ODcyNzU4MzQxMjI0NA.G_ly7p.U04jtq-KNc6mCcF1A3jRvT6QPr6_PsYAASlkjU"
-model_engine = "text-davinci-003"
-server_terminal_ID = 977292010354516039
+with open("config.json") as f:
+    config = json.load(f)
+
+openai.api_key = config["openai_key"]
+discord_bot_key = config["bot_key"]
+model_engine = config["language_model"]
+text_channel = config["text_channel"]
 
 
 
@@ -49,7 +54,7 @@ async def on_message(ctx):
         ctx (commands.Context): Standard discord.py context.
     """
     channel = ctx.channel
-    if channel.id == server_terminal_ID and ctx.author != bot.user:
+    if channel.id == text_channel and ctx.author != bot.user:
         response = await prompt_openai(ctx.content)
         print(response)
         await channel.send(response)

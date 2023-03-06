@@ -1,3 +1,5 @@
+Informal documentation because I've yet to create a environment for this. 
+
 Python 3.9.2
 pip install discord.py
 pip install pynacl
@@ -8,5 +10,4 @@ pip install discord-ext-audiorec
 python -m pip install -U discord-ext-audiorec
 pip install SpeechRecognition
 pip install gTTS
-
 pip install ipywidgets
