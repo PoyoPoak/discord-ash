@@ -11,7 +11,9 @@ from discord.ext.audiorec import NativeVoiceClient
 bot = commands.Bot(command_prefix = ">",
                       intents=discord.Intents.all())
 
-
+with open("history.txt", 'w') as f:
+    f.seek(0)  # move the file pointer to the beginning of the file
+    f.truncate()  # delete all contents of the file
 
 # PARAMS ----------------------------------------------------------------------
 
@@ -55,8 +57,7 @@ async def on_message(ctx):
     """
     channel = ctx.channel
     if channel.id == text_channel and ctx.author != bot.user:
-        response = await prompt_openai(ctx.content)
-        print(response)
+        response = await chatgpt(ctx.content)
         await channel.send(response)
     await bot.process_commands(ctx)
 
@@ -195,7 +196,7 @@ async def transcribe_audio(audio_file):
     
 
 
-async def prompt_openai(prompt):
+async def prompt_openai(prompt, history):
     """Send prompt to OpenAI and return response.
 
     Args:
@@ -204,14 +205,18 @@ async def prompt_openai(prompt):
     Returns:
         string: Text response from OpenAI. 
     """
-    completion = openai.Completion.create(engine=model_engine,
-                                          prompt=prompt,    
+    input_prompt = history+"Human:"+prompt+"AI:"
+    print(input_prompt)
+    completion = openai.Completion.create(engine="text-davinci-003",
+                                          prompt=(input_prompt),  
+                                          temperature=0.9,  
                                           max_tokens=1024,    
-                                          n=1,
-                                          stop=None,
-                                          temperature=0.5,)
+                                          top_p=1,
+                                          frequency_penalty=0,
+                                          presence_penalty=0.6,
+                                          stop=[" Human:", " AI:"])
 
-    response = completion.choices[0].text
+    response = completion.choices[0].text.strip()
     return response
 
 
@@ -235,6 +240,21 @@ async def process_prompt():
     response = await prompt_openai(transcription)
     await text_to_speech(response)
 
+
+
+async def chatgpt(prompt):
+    with open("history.txt", "r") as f:
+        history = f.read()
+    
+    response = await prompt_openai(prompt, history)
+    
+    history += "Human: " + prompt + "\nAI: " + response + "\n"
+    
+    with open("history.txt", "w") as f:
+        f.write(history)
+            
+    return response
+    
 
 
 # BEFORE INVOKE ---------------------------------------------------------------
