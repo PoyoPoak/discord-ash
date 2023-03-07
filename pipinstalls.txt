@@ -11,3 +11,4 @@ python -m pip install -U discord-ext-audiorec
 pip install SpeechRecognition
 pip install gTTS
 pip install ipywidgets
+pip install emoji

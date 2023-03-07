@@ -1,6 +1,8 @@
 import discord
 import openai
 import json
+import emoji
+import re
 from discord.ext import commands
 
 
@@ -22,7 +24,7 @@ with open("history.txt", 'w') as f:
 openai.api_key = config["openai_key"]
 discord_bot_key = config["bot_key"]
 model_engine = config["language_model"]
-text_channel = config["text_channel"]
+text_channel = config["text_channels"]["server_terminal"]
 
 bot = commands.Bot(command_prefix = config["prefix_command"],
                    intents=discord.Intents.all())
@@ -37,7 +39,7 @@ bot = commands.Bot(command_prefix = config["prefix_command"],
 async def on_ready():
     """Bot ready event and sets status."""
     await bot.change_presence(status=discord.Status.dnd, 
-                            activity=discord.Game("VSCode"))
+                            activity=discord.Game(config["bot_info"]["activity"]))
     print("We have logged in as {0.user}".format(bot))
 
 
@@ -73,7 +75,6 @@ async def prompt_openai(prompt, history, author):
         string: Response from AI.
     """
     input_prompt = history + author + ": " + prompt + "\nAI: "
-    print(input_prompt)
     completion = openai.Completion.create(engine="text-davinci-003",
                                           prompt=(input_prompt),  
                                           temperature=0.9,  
@@ -101,6 +102,8 @@ async def chatgpt(prompt, author):
     with open("history.txt", "r") as f:
         history = f.read()
     
+    prompt = filter_ascii(prompt)
+    print(prompt)
     response = await prompt_openai(prompt, history, author)
     
     history += author + ": " + prompt + "\nAI: " + response + "\n"
@@ -111,7 +114,28 @@ async def chatgpt(prompt, author):
     return response
     
 
-        
+
+
+def filter_ascii(user_input):
+    """ Removes emojis and non-ascii characters from user input.
+
+    Args:
+        user_input (string): User input.
+
+    Returns:
+        string: Filtered user input.
+    """
+    # Discord emoji handling.
+    user_input = re.sub(r"<:\w+:\d+>", "", user_input)
+    
+    # Filter for non ascii chars.
+    user_input = ''.join([char for char in user_input if ord(char) < 128])
+    
+    return user_input
+
+       
+       
+     
 # START BOT -------------------------------------------------------------------    
 
 bot.run(discord_bot_key)
