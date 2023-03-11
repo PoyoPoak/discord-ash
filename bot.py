@@ -23,7 +23,7 @@ with open("history.txt", 'w') as f:
 
 openai.api_key = config["openai_key"]
 discord_bot_key = config["bot_key"]
-model_engine = config["language_model"]
+model_engine = config["language_models"]["chat"]
 text_channel = config["text_channels"]["server_terminal"]
 
 bot = commands.Bot(command_prefix = config["prefix_command"],

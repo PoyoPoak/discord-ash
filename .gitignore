@@ -6,3 +6,6 @@ config.json
 
 # Ignore history.txt
 history.txt
+
+# Ignore history.json
+history.json
