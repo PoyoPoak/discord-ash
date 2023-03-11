@@ -22,6 +22,11 @@ with open("history.txt", 'w') as f:
         
 # Clear history json file.
 with open("history.json", 'w') as f:
+    if(config["initialize"] == True):
+        json.dump([{
+            "role": "system", 
+            "content": config["initialization_prompt"]}], f)
+    elif(config["initialize"] == False):
         json.dump([], f)
 
 # API Keys.
@@ -104,7 +109,7 @@ async def prompt_davinci(prompt, history, author):
 
 
 
-async def gpt_turbo(prompt, history):
+async def gpt_turbo(prompt, history, author):
     """Prompts OpenAI API for response.
 
     Args:
@@ -115,14 +120,16 @@ async def gpt_turbo(prompt, history):
     Returns:
         string: Response from AI.
     """
-    history.append({'role': 'user', 'content': prompt})
+    history.append({'role': 'user', 'content': author + ": " + prompt})
     
     # Constructs prompt for OpenAI API input.
     completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=history)
 
-    return completion.choices[0].text.strip()
+    history.append({'role': completion.choices[0].message.role, 'content': completion.choices[0].message.content})
+    
+    return history
 
 
 
@@ -155,12 +162,24 @@ async def chatgpt(prompt, author):
             f.write(history)
             
     elif(model_engine == "gpt-3.5-turbo"):
+        # Read history from file.
         history = read_array_from_file()
-        history.append({"role": "system", "content": config["initialization_prompt"]})
-        history = gpt_turbo(prompt, history)
+        
+        # Append history with prompt and response.
+        # history.append({"role": "system", 
+        #                 "content": config["initialization_prompt"]})
+        
+        # Gets response from OpenAI API given prompt, history, and author.
+        history = await gpt_turbo(prompt, history, author)
+        
+        write_array_to_file(history)
+        
+        # Output response array.
         response = '{0}: {1}\n'.format(history[-1]['role'].strip(), 
                                        history[-1]['content'].strip())
-            
+        
+    response = response[15:]
+        
     return response
     
 
@@ -202,11 +221,8 @@ def write_array_to_file(array):
     Args:
         array (array): Array to write to file.
     """
-    with open("history.json", 'w') as f:
-        for item in array:
-            f.write(f"role: {item['role']}\n")
-            f.write(f"content: {item['content']}\n\n")
-       
+    with open("history.json", 'w') as outfile:
+        json.dump(array, outfile)
      
      
 # START BOT -------------------------------------------------------------------    
