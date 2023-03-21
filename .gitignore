@@ -1,11 +1,11 @@
-# Ignore .wav files
-*.wav
-
 # Ignore config.json
 config.json
 
-# Ignore history.txt
-history.txt
-
 # Ignore history.json
 history.json
+
+# Ignore ash.png
+ash.png
+
+# Ignore .pyc files
+__pycache__
