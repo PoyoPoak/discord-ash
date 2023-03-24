@@ -1,4 +1,6 @@
 import json
+import re
+import datetime
 
 def load_config():
     """Loads config file.
@@ -42,3 +44,12 @@ def initialize_json(prompt):
         json.dump([{
             "role": "system", 
             "content": prompt}], f)
+        
+def get_time():
+    timestamp = datetime.datetime.now()
+    timestamp_string = timestamp.strftime('%Y-%m-%d_%H-%M-%S')
+    return timestamp_string
+
+def prune_prefix(input_str):
+    pattern = r'^assistant: \d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2} Ash: '
+    return re.sub(pattern, '', input_str)

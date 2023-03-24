@@ -30,8 +30,10 @@ async def prompt_model(prompt, history, author):
     Returns:
         string: Response from AI.
     """
+    time_Stamp = get_time()
+    
     # Assembles history array with prompt for OpenAI API input.
-    history.append({'role': 'user', 'content': author + ": " + prompt})
+    history.append({'role': 'user', 'content': time_Stamp + " " + author + ": " + prompt})
     
     # Get response from OpenAI API.
     completion = openai.ChatCompletion.create(
@@ -72,10 +74,7 @@ async def chatgpt(prompt, author, model_engine):
             history[-1]['role'].strip(), 
             history[-1]['content'].strip())
         
-        # Trim the "assistant: Ash: " part of the response.
-        if response.startswith("assistant: Ash: "):
-            response = response[16:]
-        elif (response.startswith("assistant: Ash: ")):
-            response = response
+        # Trim the prefixes of part of the response.
+        response = prune_prefix(response)
         
     return response
