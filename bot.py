@@ -37,6 +37,8 @@ async def on_message(ctx):
     Args:
         ctx (commands.Context): Standard discord.py context.
     """
+    await clean_memory(initialization_prompt)
+    
     # Sets channel to interact with.
     channel = ctx.channel
     
