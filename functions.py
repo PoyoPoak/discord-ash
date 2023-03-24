@@ -51,5 +51,8 @@ def get_time():
     return timestamp_string
 
 def prune_prefix(input_str):
-    pattern = r'^assistant: \d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2} Ash: '
-    return re.sub(pattern, '', input_str)
+    pattern1 = r'^assistant: \d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2} Ash: '
+    pattern2 = r'^assistant: \d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}'
+    first = re.sub(pattern1, '', input_str)
+    second = re.sub(pattern2, '', first)
+    return second
