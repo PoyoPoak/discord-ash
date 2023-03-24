@@ -43,7 +43,7 @@ async def prompt_model(prompt, history, author):
     # Append history with prompt and response.
     history.append({
         'role': completion.choices[0].message.role, 
-        'content': completion.choices[0].message.content})
+        'content': time_Stamp + " " + completion.choices[0].message.content})
     
     return history
 
