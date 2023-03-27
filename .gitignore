@@ -9,3 +9,6 @@ ash.png
 
 # Ignore .pyc files
 __pycache__
+
+#Ignore old_summary.txt
+old_summary.txt

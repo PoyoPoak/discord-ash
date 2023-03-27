@@ -43,7 +43,7 @@ async def prompt_model(prompt, history, author):
     # Append history with prompt and response.
     history.append({
         'role': completion.choices[0].message.role, 
-        'content': time_Stamp + " " + completion.choices[0].message.content})
+        'content': completion.choices[0].message.content})
     
     return history
 
@@ -78,3 +78,63 @@ async def chatgpt(prompt, author, model_engine):
         response = prune_prefix(response)
         
     return response
+
+async def davincii_summarize():
+    """Summarizes chat history using OpenAI API.
+
+    Returns:
+        string: Summary of chat history.
+    """
+    prompt = "Summarize the following chat log and only keep the most "\
+        "important details while keeping it as short as possible: "
+        
+    # Get condensed chat log.
+    condensed = get_condensed_history()
+    
+    # Constructs prompt for OpenAI API input.
+    input_prompt = prompt + condensed
+    
+    # Get response from OpenAI API.
+    completion = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=(input_prompt),  
+        temperature=0.7,  
+        max_tokens=1024,    
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=1.0)
+
+    return completion.choices[0].text.strip()
+
+async def davincii_combine():
+    """Combines two summaries using OpenAI API.
+
+    Returns:
+        string: Combined summaries of chat history.
+    """
+    prompt = "The first is a summary of older events in a chat log. The "\
+        "second is a summary of recent events in a chat log. Combine the "\
+        "two summaries only keep the most important details while keeping "\
+        "it as short as possible. \nHere is the first summary: \n"
+        
+    # Get current sumamry and condensed chat log.
+    old_history = read_txt("old_summary.txt")
+    new_history = await davincii_summarize()
+        
+    # Constructs prompt for OpenAI API input.
+    input_prompt =  (prompt + 
+                     old_history + 
+                     "\nHere is the second summary: \n" + 
+                     new_history)
+    
+    # Get response from OpenAI API.
+    completion = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=(input_prompt),  
+        temperature=0.7,  
+        max_tokens=1024,    
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=1.0)
+
+    return completion.choices[0].text.strip()

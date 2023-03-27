@@ -1,7 +1,6 @@
 import json
 import re
-import datetime
-import openai
+import datetime 
 
 def load_config():
     """Loads config file.
@@ -46,15 +45,35 @@ def initialize_json(prompt):
             "role": "system", 
             "content": prompt}], f)
         
+def read_txt(file_path):
+    """Reads contents to string from file.
+
+    Returns:
+        string: String from file.
+    """
+    with open(file_path, 'r') as f:
+        string = f.read()
+        
+    return string
+
+def write_txt(file_path, string):
+    """Writes string to file.
+
+    Args:
+        file_path (string): Path to file.
+        string (string): String to write to file.
+    """
+    with open(file_path, 'w') as f:
+        f.write(string)
+        
 def get_time():
     """Gets current time.
 
     Returns:
         string: Current time. 
     """
-    timestamp = datetime.datetime.now()
-    timestamp_string = timestamp.strftime('%Y-%m-%d_%H-%M-%S')
-    return timestamp_string
+    today = datetime.datetime.now()
+    return today.strftime("%a %b %d %H:%M:%S %Y")
 
 def prune_prefix(input_str):
     """Removes prefix from input string.
@@ -65,41 +84,22 @@ def prune_prefix(input_str):
     Returns:
         string: Input string without prefix. 
     """
-    pattern1 = r'^assistant: \d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2} Ash: '
-    pattern2 = r'^assistant: \d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}'
-    first = re.sub(pattern1, '', input_str)
-    second = re.sub(pattern2, '', first)
-    return second
+    pat_assist = r'^assistant: '
+    pat_name = r'^Ash: ' 
+    rem_assist = re.sub(pat_assist, '', input_str)
+    rem_name = re.sub(pat_name, '', rem_assist)
+    return rem_name
 
 def get_condensed_history():
+    """Condenses history into one string.
+
+    Returns:
+        strin: Condensed history string.
+    """
     with open("history.json", 'r') as f:
         data = json.load(f)
         contents = ''
-        for item in data:
-            contents += item['content'] + ' '
+        for index, item in enumerate(data):
+            if index > 0:
+                contents += item['content'] + ' '
         return contents.strip()
-    
-async def get_summary():
-    prompt = "Summarize the following chat log while maintaining dates: "
-    condensed = get_condensed_history()
-    
-    # Constructs prompt for OpenAI API input.
-    input_prompt = prompt + condensed
-    
-    # Get response from OpenAI API.
-    completion = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=(input_prompt),  
-        temperature=0.7,  
-        max_tokens=1024,    
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=1.0)
-
-    return completion.choices[0].text.strip()
-
-async def clean_memory(initial_prompt):
-    summary = await get_summary()
-    wipe_json()
-    wipe_start = initial_prompt + " Here is a summary of your conversations so far: " + summary
-    initialize_json(wipe_start)
