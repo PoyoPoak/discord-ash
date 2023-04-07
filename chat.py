@@ -85,8 +85,7 @@ async def davincii_summarize():
     Returns:
         string: Summary of chat history.
     """
-    prompt = "Summarize the following chat log and only keep the most "\
-        "important details while keeping it as short as possible: "
+    prompt = "Summarize the events and topics of the following chat log: "
         
     # Get condensed chat log.
     condensed = get_condensed_history()
@@ -112,10 +111,11 @@ async def davincii_combine():
     Returns:
         string: Combined summaries of chat history.
     """
-    prompt = "The first is a summary of older events in a chat log. The "\
-        "second is a summary of recent events in a chat log. Combine the "\
-        "two summaries only keep the most important details while keeping "\
-        "it as short as possible. \nHere is the first summary: \n"
+    prompt = "Combine the two summaries and shorten them. The first summary "\
+	"summarizes the events of older conversations. The second summary "\
+        "summarizes the events of the most recent conversation. Combine the "\
+        "two summaries into a single summary. Ensure all events and topics "\
+        "are kept. \nHere is the first summary: \n"
         
     # Get current sumamry and condensed chat log.
     old_history = read_txt("old_summary.txt")
