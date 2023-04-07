@@ -14,6 +14,9 @@ model_engine = config["model"]
 text_channel = config["text_channel"]
 initialization_prompt = config["initialization_prompt"]
 clean_slate = config["clean_slate"]
+inactivity_period = config["inactivity_period"]
+
+last_interaction = datetime.datetime.now()
 
 bot = commands.Bot(command_prefix = config["prefix_command"],
                    intents=discord.Intents.all())
@@ -47,6 +50,31 @@ async def on_message(ctx):
         # Send response to designated text channel.
         await channel.send(response)
 
+    # Check if bot has been inactive for a certain amount of time.
+    global last_interaction
+    now = datetime.datetime.now()
+    time_since_last_interaction = (now - last_interaction).total_seconds()
+    
+    # If bot has been inactive for a certain amount of time, condense memory.
+    if time_since_last_interaction > inactivity_period:
+        await condense_memory()
+        
+    # Update last interaction time.
+    last_interaction = now
+
     await bot.process_commands(ctx)
+    
+async def condense_memory():
+    """Condenses memory by summarizing conversation history and wiping memory.
+    """
+    # Summarize conversation history and write it to file.
+    summary = await davincii_combine()
+    write_txt("old_summary.txt", summary)
+    
+    # Reset history with summary.
+    wipe_json()
+    initialize_json(initialization_prompt + 
+                    " Here is a summary of your conversations so far: " + 
+                    summary)
 
 bot.run(discord_bot_key)

@@ -78,3 +78,63 @@ async def chatgpt(prompt, author, model_engine):
         response = prune_prefix(response)
         
     return response
+
+async def davincii_summarize():
+    """Summarizes chat history using OpenAI API.
+
+    Returns:
+        string: Summary of chat history.
+    """
+    prompt = "Summarize the events and topics of the following chat log: "
+        
+    # Get condensed chat log.
+    condensed = get_condensed_history()
+    
+    # Constructs prompt for OpenAI API input.
+    input_prompt = prompt + condensed
+    
+    # Get response from OpenAI API.
+    completion = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=(input_prompt),  
+        temperature=0.7,  
+        max_tokens=1024,    
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=1.0)
+
+    return completion.choices[0].text.strip()
+
+async def davincii_combine():
+    """Combines two summaries using OpenAI API.
+
+    Returns:
+        string: Combined summaries of chat history.
+    """
+    prompt = "Combine the two summaries and shorten them. The first summary "\
+	"summarizes the events of older conversations. The second summary "\
+        "summarizes the events of the most recent conversation. Combine the "\
+        "two summaries into a single summary. Ensure all events and topics "\
+        "are kept. \nHere is the first summary: \n"
+        
+    # Get current sumamry and condensed chat log.
+    old_history = read_txt("old_summary.txt")
+    new_history = await davincii_summarize()
+        
+    # Constructs prompt for OpenAI API input.
+    input_prompt =  (prompt + 
+                     old_history + 
+                     "\nHere is the second summary: \n" + 
+                     new_history)
+    
+    # Get response from OpenAI API.
+    completion = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=(input_prompt),  
+        temperature=0.7,  
+        max_tokens=1024,    
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=1.0)
+
+    return completion.choices[0].text.strip()

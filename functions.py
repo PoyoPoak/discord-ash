@@ -1,6 +1,6 @@
 import json
 import re
-import datetime
+import datetime 
 
 def load_config():
     """Loads config file.
@@ -45,14 +45,61 @@ def initialize_json(prompt):
             "role": "system", 
             "content": prompt}], f)
         
+def read_txt(file_path):
+    """Reads contents to string from file.
+
+    Returns:
+        string: String from file.
+    """
+    with open(file_path, 'r') as f:
+        string = f.read()
+        
+    return string
+
+def write_txt(file_path, string):
+    """Writes string to file.
+
+    Args:
+        file_path (string): Path to file.
+        string (string): String to write to file.
+    """
+    with open(file_path, 'w') as f:
+        f.write(string)
+        
 def get_time():
-    timestamp = datetime.datetime.now()
-    timestamp_string = timestamp.strftime('%Y-%m-%d_%H-%M-%S')
-    return timestamp_string
+    """Gets current time.
+
+    Returns:
+        string: Current time. 
+    """
+    today = datetime.datetime.now()
+    return today.strftime("%a %b %d %H:%M:%S %Y")
 
 def prune_prefix(input_str):
-    pattern1 = r'^assistant: \d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2} Ash: '
-    pattern2 = r'^assistant: \d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}'
-    first = re.sub(pattern1, '', input_str)
-    second = re.sub(pattern2, '', first)
-    return second
+    """Removes prefix from input string.
+
+    Args:
+        input_str (string): Input string.
+
+    Returns:
+        string: Input string without prefix. 
+    """
+    pat_assist = r'^assistant: '
+    pat_name = r'^Ash: ' 
+    rem_assist = re.sub(pat_assist, '', input_str)
+    rem_name = re.sub(pat_name, '', rem_assist)
+    return rem_name
+
+def get_condensed_history():
+    """Condenses history into one string.
+
+    Returns:
+        strin: Condensed history string.
+    """
+    with open("history.json", 'r') as f:
+        data = json.load(f)
+        contents = ''
+        for index, item in enumerate(data):
+            if index > 0:
+                contents += item['content'] + ' '
+        return contents.strip()
