@@ -12,6 +12,3 @@ __pycache__
 
 #Ignore old_summary.txt
 old_summary.txt
-
-#Ignore bot copy main.py
-main.py
