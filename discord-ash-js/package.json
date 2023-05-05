@@ -1,0 +1,19 @@
+{
+  "name": "discord-ash",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@discordjs/opus": "^0.9.0",
+    "@discordjs/voice": "^0.16.0",
+    "discord.js": "^14.10.2",
+    "dotenv": "^16.0.3",
+    "ffmpeg": "^0.0.4",
+    "sodium-native": "^4.0.1"
+  }
+}
