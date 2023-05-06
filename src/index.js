@@ -1,7 +1,28 @@
-// Require the necessary discord.js classes
-const { Client, Events, GatewayIntentBits } = require('discord.js');
-const { joinVoiceChannel } = require('@discordjs/voice');
-const { token } = require('../config.json');
+// Import the required packages
+const {
+  Client,
+  Events,
+  GatewayIntentBits,
+} = require("discord.js");
+
+const {
+  joinVoiceChannel,
+  createAudioResource,
+  AudioPlayerStatus,
+  createAudioPlayer,
+  StreamType,
+  entersState,
+  VoiceConnectionStatus,
+  createAudioReceiver,
+} = require('@discordjs/voice');
+
+const { token, googleCredentials } = require('../config.json');
+const { StreamOpusDecoder } = require('@discordjs/opus');
+const { SpeechClient } = require('@google-cloud/speech');
+
+const speechClient = new SpeechClient();
+
+process.env.GOOGLE_APPLICATION_CREDENTIALS = googleCredentials;
 
 // Add required intents
 const client = new Client({
@@ -40,10 +61,38 @@ client.on('messageCreate', async (message) => {
         channelId: message.member.voice.channel.id,
         guildId: message.guild.id,
         adapterCreator: message.guild.voiceAdapterCreator,
+        selfDeaf: false,
       });
 
       // Log connection debug information
       connection.on('debug', console.debug);
+
+      // Create a voice receiver
+      connection.receiver.speaking.on('start', async (userId) => {
+        const audioStream = connection.receiver.subscribe(userId, { mode: 'opus' });
+
+        // Configure the streaming recognition request
+        const request = {
+          config: {
+            encoding: 'OGG_OPUS',
+            sampleRateHertz: 48000,
+            languageCode: 'en-US',
+          },
+          interimResults: true,
+        };
+
+        // Create a recognize stream and pipe the audio stream into it
+        const recognizeStream = speechClient.streamingRecognize(request)
+          .on('error', console.error)
+          .on('data', data => {
+            const transcription = data.results
+              .map(result => result.alternatives[0].transcript)
+              .join('\n');
+            console.log(`Transcription: ${transcription}`);
+          });
+
+        audioStream.pipe(recognizeStream);
+      });
     }
   }
 });

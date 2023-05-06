@@ -14,7 +14,9 @@
     "@google-cloud/speech": "^5.4.1",
     "discord.js": "^14.10.2",
     "dotenv": "^16.0.3",
+    "env": "^0.0.2",
     "ffmpeg": "^0.0.4",
+    "pcm-transform": "^1.0.2",
     "sodium-native": "^4.0.1"
   }
 }
