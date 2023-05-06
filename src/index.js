@@ -14,13 +14,15 @@ const {
   entersState,
   VoiceConnectionStatus,
   createAudioReceiver,
+  SpeakingMap,
 } = require('@discordjs/voice');
 
 const { token, googleCredentials } = require('../config.json');
 const { StreamOpusDecoder } = require('@discordjs/opus');
 const { SpeechClient } = require('@google-cloud/speech');
+const speech = require('@google-cloud/speech');
 
-const speechClient = new SpeechClient();
+const speechClient = new speech.SpeechClient();
 
 process.env.GOOGLE_APPLICATION_CREDENTIALS = googleCredentials;
 
@@ -85,9 +87,7 @@ client.on('messageCreate', async (message) => {
         const recognizeStream = speechClient.streamingRecognize(request)
           .on('error', console.error)
           .on('data', data => {
-            const transcription = data.results
-              .map(result => result.alternatives[0].transcript)
-              .join('\n');
+            const transcription = data.results.map(result => result.alternatives[0].transcript).join('\n');
             console.log(`Transcription: ${transcription}`);
           });
 
