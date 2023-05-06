@@ -7,13 +7,6 @@ const {
 
 const {
   joinVoiceChannel,
-  createAudioResource,
-  AudioPlayerStatus,
-  createAudioPlayer,
-  StreamType,
-  entersState,
-  VoiceConnectionStatus,
-  createAudioReceiver,
   SpeakingMap,
 } = require('@discordjs/voice');
 
@@ -23,6 +16,7 @@ const { SpeechClient } = require('@google-cloud/speech');
 const speech = require('@google-cloud/speech');
 
 const speechClient = new speech.SpeechClient();
+const speakingMap = new SpeakingMap();
 
 process.env.GOOGLE_APPLICATION_CREDENTIALS = googleCredentials;
 
@@ -66,33 +60,37 @@ client.on('messageCreate', async (message) => {
         selfDeaf: false,
       });
 
+      connection.receiver.speaking.on('start', userId => console.log(`User ${userId} started speaking`));
+      connection.receiver.speaking.on('stop', userId => console.log(`User ${userId} stopped speaking`));
+      console.log("stopped");
+
       // Log connection debug information
       connection.on('debug', console.debug);
 
       // Create a voice receiver
-      connection.receiver.speaking.on('start', async (userId) => {
-        const audioStream = connection.receiver.subscribe(userId, { mode: 'opus' });
+      // connection.receiver.speaking.on('start', async (userId) => {
+      //   const audioStream = connection.receiver.subscribe(userId, { mode: 'opus' });
 
-        // Configure the streaming recognition request
-        const request = {
-          config: {
-            encoding: 'OGG_OPUS',
-            sampleRateHertz: 48000,
-            languageCode: 'en-US',
-          },
-          interimResults: true,
-        };
+      //   // Configure the streaming recognition request
+      //   const request = {
+      //     config: {
+      //       encoding: 'OGG_OPUS',
+      //       sampleRateHertz: 48000,
+      //       languageCode: 'en-US',
+      //     },
+      //     interimResults: true,
+      //   };
 
-        // Create a recognize stream and pipe the audio stream into it
-        const recognizeStream = speechClient.streamingRecognize(request)
-          .on('error', console.error)
-          .on('data', data => {
-            const transcription = data.results.map(result => result.alternatives[0].transcript).join('\n');
-            console.log(`Transcription: ${transcription}`);
-          });
+      //   // Create a recognize stream and pipe the audio stream into it
+      //   const recognizeStream = speechClient.streamingRecognize(request)
+      //     .on('error', console.error)
+      //     .on('data', data => {
+      //       const transcription = data.results.map(result => result.alternatives[0].transcript).join('\n');
+      //       console.log(`Transcription: ${transcription}`);
+      //     });
 
-        audioStream.pipe(recognizeStream);
-      });
+      //   audioStream.pipe(recognizeStream);
+      // });
     }
   }
 });
