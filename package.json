@@ -12,6 +12,7 @@
     "@discordjs/opus": "^0.9.0",
     "@discordjs/voice": "^0.16.0",
     "@google-cloud/speech": "^5.4.1",
+    "discord-speech-recognition": "^3.3.1",
     "discord.js": "^14.10.2",
     "dotenv": "^16.0.3",
     "env": "^0.0.2",
