@@ -1,17 +1,10 @@
 # Ignore config.json
 config.json
 
-# Ignore history.json
-history.json
+# Ignore history folder and content
+history/*
 
-# Ignore ash.png
-ash.png
+# Ignore node_modules
+node_modules/*
 
-# Ignore .pyc files
-__pycache__
 
-#Ignore old_summary.txt
-old_summary.txt
-
-#Ignore google cloud credentials
-google-credentials.json
