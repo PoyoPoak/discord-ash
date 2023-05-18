@@ -7,4 +7,11 @@ history/*
 # Ignore node_modules
 node_modules/*
 
+# Ignore google credentials file
+gcloud.json
 
+# Ignore screenshot of params
+params.jpg
+
+# Ignore output.mp3
+output.mp3

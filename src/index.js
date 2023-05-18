@@ -1,11 +1,14 @@
 const { Configuration, OpenAIApi } = require("openai");
 const { Client, GatewayIntentBits } = require("discord.js");
-const { joinVoiceChannel } = require("@discordjs/voice");
 const { addSpeechEvent } = require("discord-speech-recognition");
-
+const textToSpeech = require('@google-cloud/text-to-speech');
+const { joinVoiceChannel, createAudioResource, createAudioPlayer, VoiceConnectionStatus } = require("@discordjs/voice");
 const fs = require('fs');
 const path = require('path');
 const config = require('../config.json');
+const util = require('util');
+
+process.env.GOOGLE_APPLICATION_CREDENTIALS = './gcloud.json';
 
 const client = new Client({
   intents: [
@@ -16,26 +19,43 @@ const client = new Client({
   ],
 });
 
-
 const configuration = new Configuration({
   apiKey: config.openai_key,
 });
 
+const ttsClient = new textToSpeech.TextToSpeechClient();
 const openai = new OpenAIApi(configuration);
+const player = createAudioPlayer();
 
 addSpeechEvent(client);
 let lastMsgTime;
 let currConvoFile;
 
-client.on("messageCreate", (msg) => {
+client.on("messageCreate", async (msg) => {
   const voiceChannel = msg.member?.voice.channel;
   if (voiceChannel) {
-    joinVoiceChannel({
-      channelId: voiceChannel.id,
-      guildId: voiceChannel.guild.id,
-      adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-      selfDeaf: false,
-    });
+    try {
+      const connection = joinVoiceChannel({
+        channelId: voiceChannel.id,
+        guildId: voiceChannel.guild.id,
+        adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+        selfDeaf: false,
+      });
+
+      connection.on(VoiceConnectionStatus.Ready, () => {
+        console.log('The connection has entered the Ready state - ready to play audio!');
+        console.log(`Connected to voice channel with ID: ${connection.joinConfig.channelId}`); // Prints the channel ID
+        const subscription = connection.subscribe(player);
+
+        if (subscription) {
+          console.log('Player subscribed successfully!');
+        } else {
+          console.log('Failed to subscribe player!');
+        }
+      });
+    } catch (error) {
+      console.error('Error connecting to voice channel:', error);
+    }
   }
 });
 
@@ -62,6 +82,9 @@ async function processMessage(msg, author) {
     createEmptyJSONFile();
   }
 
+  // Delete old mp3 file if it exists.
+  deleteMp3();
+
   // Read history json into array
   let history = readJSON();
 
@@ -76,14 +99,17 @@ async function processMessage(msg, author) {
 
   // Pick last message from history array
   let response = `${history[history.length - 1]['role'].trim()}: ${history[history.length - 1]['content'].trim()}`;
-                  
+
   // Prune response of prefixes
-  // response = prunePrefix(response);
+  response = prunePrefix(response);
   console.log(response);
 
-  // Convert response to speech
+  // Generate mp3 file from response.
+  await tts(response);
 
   // Play response
+  const resource = createAudioResource('output.mp3');
+  player.play(resource);
 }
 
 async function promptModel(history) {
@@ -100,6 +126,24 @@ async function promptModel(history) {
   });
 
   return history;
+}
+
+async function tts(inputStr) {
+  // Construct the request
+  const request = {
+    input: { text: inputStr },
+    // Select the language and SSML voice gender (optional)
+    voice: { languageCode: 'en-US', ssmlGender: 'FEMALE', name: 'en-US-Studio-O' },
+    // select the type of audio encoding
+    audioConfig: { audioEncoding: 'MP3' },
+  };
+
+  // Performs the text-to-speech request
+  const [response] = await ttsClient.synthesizeSpeech(request);
+  // Write the binary audio content to a local file
+  const writeFile = util.promisify(fs.writeFile);
+  await writeFile('output.mp3', response.audioContent, 'binary');
+  console.log('Audio content written to file: output.mp3');
 }
 
 function checkLastMsgTime() {
@@ -152,12 +196,6 @@ function writeJSON(array) {
   fs.writeFileSync(currConvoFile, data);
 }
 
-function wipeJSON() {
-  let emptyArray = [];
-  let data = JSON.stringify(emptyArray);
-  fs.writeFileSync(currConvoFile, data);
-}
-
 function initializeJSON(prompt) {
   let initialPrompt = [{ "role": "system", "content": prompt }];
   let data = JSON.stringify(initialPrompt);
@@ -170,6 +208,23 @@ function prunePrefix(inputStr) {
   let remAssist = inputStr.replace(patAssist, '');
   let remName = remAssist.replace(patName, '');
   return remName;
+}
+
+function deleteMp3() {
+  const filePath = './output.mp3';
+
+  if (fs.existsSync(filePath)) {
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+
+      console.log(`Deleted ${filePath} successfully.`);
+    });
+  } else {
+    console.log(`${filePath} does not exist.`);
+  }
 }
 
 // Create initial JSON file for message history
