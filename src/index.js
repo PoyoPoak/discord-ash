@@ -30,7 +30,6 @@ const player = createAudioPlayer();
 addSpeechEvent(client);
 let lastMsgTime;
 let currConvoFile;
-let gptModel = 'gpt-3.5-turbo';
 
 client.on("messageCreate", async (msg) => {
   const voiceChannel = msg.member?.voice.channel;
@@ -72,6 +71,8 @@ client.on("speech", (msg) => {
 });
 
 client.on("ready", () => {
+
+
   console.log("Ready!");
 });
 
@@ -83,26 +84,6 @@ async function processMessage(msg, author) {
 
   // Delete old mp3 file if it exists.
   deleteMp3();
-
-  // Command 99 to clear history.
-  if(msg.content == 'Execute Order 99') {
-    createEmptyJSONFile();
-    console.log("INVOKED ORDER 99");
-  }
-
-  if(msg.content == 'Execute Order 77') {
-    gptModel = 'gpt-4'
-    console.log("INVOKED ORDER 77");
-  }
-
-  if(msg.content == 'Execute Order 66') {
-    gptModel = 'gpt-3.5-turbo'
-    console.log("INVOKED ORDER 66");
-  }
-
-  if(msg.content == 'Execute Order 55') {
-    process.exit(0);
-  }
 
   // Read history json into array
   let history = readJSON();
@@ -121,7 +102,7 @@ async function processMessage(msg, author) {
 
   // Prune response of prefixes
   response = prunePrefix(response);
-  console.log("Ash: " + response);
+  console.log(response);
 
   // Generate mp3 file from response.
   await tts(response);
@@ -134,7 +115,7 @@ async function processMessage(msg, author) {
 async function promptModel(history) {
   // Send history with new message to OpenAI API
   const completion = await openai.createChatCompletion({
-    model: gptModel,
+    model: "gpt-3.5-turbo",
     messages: history
   });
 
@@ -162,7 +143,7 @@ async function tts(inputStr) {
   // Write the binary audio content to a local file
   const writeFile = util.promisify(fs.writeFile);
   await writeFile('output.mp3', response.audioContent, 'binary');
-  // console.log('Audio content written to file: output.mp3');
+  console.log('Audio content written to file: output.mp3');
 }
 
 function checkLastMsgTime() {
@@ -200,7 +181,7 @@ function createEmptyJSONFile() {
 
     currConvoFile = fileName;
     initializeJSON(config.initialization_prompt);
-    console.log(`"${fileName}" created successfully.`);
+    console.log(`Empty JSON file "${fileName}" created successfully.`);
   });
 }
 
@@ -239,7 +220,7 @@ function deleteMp3() {
         return;
       }
 
-      // console.log(`Deleted ${filePath} successfully.`);
+      console.log(`Deleted ${filePath} successfully.`);
     });
   } else {
     console.log(`${filePath} does not exist.`);
