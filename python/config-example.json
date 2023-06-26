@@ -1,0 +1,19 @@
+{
+    "bot_info":{
+        "name": "Ash",
+        "activity": "VSCode",
+        "status": "dnd"
+    },
+
+    "prefix_command":">",
+    
+    "openai_key": "KEY",
+    "bot_key": "KEY",
+
+    "model": "gpt-3.5-turbo",
+
+    "text_channel": 0000000000000000000,
+
+    "clean_slate": false,
+    "initialization_prompt": "You are a friendly chatbot."
+}
