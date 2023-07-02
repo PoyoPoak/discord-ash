@@ -1,17 +1,7 @@
-# Ignore config.json
+__pycache__/
+node_modules/
 config.json
-
-# Ignore history folder and content
-history/*
-
-# Ignore node_modules
-node_modules/*
-
-# Ignore google credentials file
 gcloud.json
-
-# Ignore screenshot of params
-params.jpg
-
-# Ignore output.mp3
 output.mp3
+history.json
+voice-history/*
